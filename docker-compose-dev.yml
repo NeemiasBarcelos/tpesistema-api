@@ -1,0 +1,41 @@
+services:
+  api:
+    container_name: api
+    build:
+      context: .
+      # crio o contexto caso queira criar um para desenvolvimento
+      dockerfile: Dockerfile
+    ports:
+      - '${PORT}:${PORT}'
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: $DATABASE_URL
+    networks:
+      - network-bridge
+      # Gosto de usa o pnpm em tudo mas é tranquilo usar o yarn
+    command: ['pnpm', 'start']
+
+  db:
+    image: postgres:alpine
+    container_name: db-dev
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: docker
+    ports:
+      - '5432:5432'
+    networks:
+      - network-bridge
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $DATABASE_USER"]
+      interval: 5s
+      retries: 5
+      timeout: 5s
+
+networks:
+  network-bridge:
+    driver: bridge
